@@ -40,7 +40,7 @@ def retrieve_memory(query: str, n_results: int = 1):
     
     Args:
         query (str): The user's question or topic to search for.
-        n_results (int): The number of memories tp return.
+        n_results (int): The number of memories to return.
     
     Returns:
         str: The most relevant memory found, or a message if none were found.
