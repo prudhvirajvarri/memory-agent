@@ -62,3 +62,31 @@ def retrieve_memory(query: str, n_results: int = 1):
         print(f"Error retrieving memory: {e}")
         return "Sorry, I had trouble accessing my memory."
 
+def delete_memory(content_to_delete: str):
+    """
+    Deletes a memory that contains specific content.
+    
+    Args:
+        content_to_delete (str): The content of the memory to delete.
+    
+    Returns:
+        str: A confirmation of deletion or a message if not found.
+    """
+    try:
+        #Find memories that contains the content to delete
+        results = memory_collection.get(
+            where_documents={"$contains": content_to_delete}
+        )
+        
+        if not results['ids']:
+            print(f"No memory found containing '{content_to_delete}'.")
+            return f"I don't have a memory about '{content_to_delete}'."
+        
+        memory_ids_to_delete = results['ids']
+        memory_collection.delete(ids=memory_ids_to_delete)
+        
+        print(f"MEMORY DELETED containing: '{content_to_delete}'")
+        return f"OK. I have forgotten my memory about '{content_to_delete}'."
+    except Exception as e:
+        print(f"Error deleting memory: {e}")
+        return "Sorry, I had trouble deleting that memory."
