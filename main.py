@@ -80,3 +80,74 @@ available_functions = {
     "delete_memory": delete_memory,
 }
 
+def run_conversation():
+    """Main conversation loop."""
+    print("AI Memory Agent is ready. Type 'exit' to end the conversation.")
+    
+    # start with a system message to set the context for the AI
+    messages = [
+        {
+            "role": "system",
+            "content": "You are a helpful AI assistant with access to tools for long-term memory."
+        }
+    ]
+    
+    while True:
+        user_input = input("You: ")
+        if user_input.lower() == "exit":
+            print("Ending conversation. Goodbye!")
+            break
+        
+        messages.append({
+            "role": "user",
+            "content": user_input
+        })
+        
+        # First API call: The model decides if a tool is needed
+        response = client.chat.completions.create(
+            model = "gpt-4o-mini",
+            messages = messages,
+            tools = tools,
+            tool_choice = "auto",
+        )
+        response_message = response.choices[0].message
+        messages.append(response_message) # Append the model's response to history
+        
+        tool_calls = response_message.tool_calls
+        
+        # Check if the model wants  to call a tool
+        if tool_calls:
+            print(f"AI wants to call a tool: {tool_calls[0].function.name}")
+            for tool_call in tool_calls:
+                function_name = tool_call.function.name
+                function_to_call = available_functions[function_name]
+                function_args = json.loads(tool_call.function.arguments)
+
+                # Call the chosen function with the model's arguments
+                function_response = function_to_call(**function_args)
+                
+                # Send the tool's result back to the model
+                messages.append(
+                    {
+                        "tool_call_id": tool_call.id,
+                        "role": "tool",
+                        "name": function_name,
+                        "content": function_response,
+                    }
+                )
+            
+            # SecondAPI call: Get a final, natural language response from the model
+            second_response = client.chat.completions.create(
+                model = "gpt-4o-mini",
+                messages = messages,
+            )
+            final_response = second_response.choices[0].message.content
+            print(f"AI: {final_response}")
+            messages.append(second_response.choices[0].message)
+        else:
+            # If no tool is needed, just print the model's response
+            final_response = response_message.content
+            print(f"AI: {final_response}")
+        
+if __name__ == "__main__":
+    run_conversation()
