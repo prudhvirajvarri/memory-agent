@@ -75,7 +75,7 @@ def delete_memory(content_to_delete: str):
     try:
         #Find memories that contains the content to delete
         results = memory_collection.get(
-            where_documents={"$contains": content_to_delete}
+            where_document={"$contains": content_to_delete}
         )
         
         if not results['ids']:
